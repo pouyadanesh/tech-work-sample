@@ -1,6 +1,7 @@
 package tech.work.sample.data
 
 import kotlinx.coroutines.withContext
+import tech.work.sample.BuildConfig
 import tech.work.sample.data.remote.RemoteApi
 import tech.work.sample.domain.entity.Movie
 import tech.work.sample.domain.providers_schedulers.CoroutinesDispatchersProvider
@@ -15,7 +16,7 @@ class MovieRepositoryImpl @Inject constructor(
 ) : MovieRepository {
     override suspend fun getPosts(start: Int, limit: Int): List<Movie> {
         return withContext(dispatchersProvider.io) {
-            apiService.getMovies()
+            apiService.getMovies(BuildConfig.API_KEY,1)
         }
     }
 }
