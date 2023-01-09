@@ -38,4 +38,10 @@ object ApiModule {
             .client(client)
             .build()
     }
+
+    @Singleton
+    @Provides
+    fun provideApiService(retrofit: Retrofit): RemoteApi {
+        return RemoteApi(retrofit)
+    }
 }

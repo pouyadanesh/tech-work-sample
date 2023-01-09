@@ -1,7 +1,7 @@
 package tech.work.sample.data.remote
 
-import tech.work.sample.data.model.ResponseModel
-import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.create
 import retrofit2.http.GET
 import retrofit2.http.Query
 import tech.work.sample.domain.entity.Movie
@@ -14,4 +14,7 @@ interface RemoteApi {
         @Query("page") page:Int
     ): List<Movie>
 
+    companion object {
+        operator fun invoke(retrofit: Retrofit) = retrofit.create<RemoteApi>()
+    }
 }
