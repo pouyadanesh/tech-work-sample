@@ -3,8 +3,6 @@ package tech.work.sample.ui.main
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -20,19 +18,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import tech.work.sample.ui.navigation.AppNavigation
 import tech.work.sample.ui.ui.theme.MyApplicationTheme
 
+@AndroidEntryPoint
 class MainListActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val viewModel: MainVM by viewModels()
         setContent {
             MyApplicationTheme {
                 // A surface container using the 'background' color from the theme
@@ -40,7 +39,7 @@ class MainListActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    MainListScreen(viewModel)
+                    AppNavigation()
                 }
             }
         }
@@ -50,7 +49,10 @@ class MainListActivity : ComponentActivity() {
 @OptIn(ExperimentalPagerApi::class, ExperimentalLifecycleComposeApi::class)
 @Composable
 fun MainListScreen(
-    viewModel: MainVM = viewModel()
+    state: MainContract.ViewState,
+    effectFlow: Flow<MainContract.ViewIntent>?,
+    onEventSent: (event: MainContract.SingleEvent) -> Unit,
+    onNavigationRequested: (navigationEffect: MainContract.ViewIntent.Navigation) -> Unit
 ) {
     val tabRowItems = listOf(
         TabRowItem(
@@ -58,7 +60,7 @@ fun MainListScreen(
             screen = {
                 TabScreen(
                     text = "Favorite",
-                    viewModel.currentState.movies,
+                    state.movies,
                     modifier = Modifier.padding(0.dp)
                 )
             },
@@ -69,7 +71,7 @@ fun MainListScreen(
             screen = {
                 TabScreen(
                     text = "TopRated",
-                    viewModel.currentState.movies,
+                    state.movies,
                     modifier = Modifier.padding(0.dp)
                 )
             },
@@ -129,6 +131,15 @@ fun MainListScreen(
 @Composable
 fun DefaultPreview() {
     MyApplicationTheme {
-        MainListScreen()
+        MainListScreen(
+            state = MainContract.ViewState(
+                movies = emptyList(),
+                isLoading = false,
+                isError = true,
+            ),
+            effectFlow = null,
+            onEventSent = {},
+            onNavigationRequested = {},
+        )
     }
 }

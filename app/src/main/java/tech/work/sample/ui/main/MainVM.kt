@@ -1,6 +1,9 @@
 package tech.work.sample.ui.main
 
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import tech.work.sample.domain.usecase.GetMoviesUseCase
 import javax.inject.Inject
 
@@ -9,15 +12,18 @@ class MainVM @Inject constructor(
     private val getMoviesUseCse: GetMoviesUseCase,
 ) : BaseViewModel<MainContract.SingleEvent, MainContract.ViewState, MainContract.ViewIntent>() {
 
+    init {
+        getMovies()
+    }
 
     /**
      * Create initial State of Views
      */
     override fun createInitialState(): MainContract.ViewState {
         return MainContract.ViewState(
-            MainContract.RandomNumberState.Idle,
-            false,
-            listOf()
+            isError = false,
+            isLoading = true,
+            movies = listOf()
         )
     }
 
@@ -25,12 +31,29 @@ class MainVM @Inject constructor(
      * Handle each event
      */
     override suspend fun handleEvent(event: MainContract.SingleEvent) {
-        generateRandomNumber()
+        when (event) {
+            is MainContract.SingleEvent.Retry -> getMovies()
+            is MainContract.SingleEvent.MovieSelection -> setEffect {
+                MainContract.ViewIntent.Navigation.ToMovieDetail(
+                    event.movie.id
+                )
+            }
+        }
     }
 
-    private suspend fun generateRandomNumber() {
-        val movies = getMoviesUseCse.invoke(1, 50)
-        setState { copy(randomNumberState = MainContract.RandomNumberState.Success(movieItems = movies)) }
+    fun getMovies() {
+        viewModelScope.launch(Dispatchers.IO) {
+            setState { copy(isLoading = true, isError = false) }
+
+            getMoviesUseCse.invoke(1, 50)
+                .onSuccess { result ->
+                    setState { copy(movies = result.movies, isLoading = false, isError = false) }
+                    setEffect { MainContract.ViewIntent.DataWasLoaded }
+                }
+                .onFailure {
+                    setState { copy(isError = true, isLoading = false) }
+                }
+        }
     }
 
 }
